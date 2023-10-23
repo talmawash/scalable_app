@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+service UserService {
+    rpc CreateUser(CreateUserRequest) returns (UserResponse);
+    rpc Login(LoginRequest) returns (LoginResponse);
+    rpc ValidateJWT(ValidateJWTRequest) returns (ValidateJWTResponse);
+}
+
+message CreateUserRequest {
+    string first_name = 1;
+    string last_name = 2;
+    string email = 3;
+    string password = 4;
+}
+
+message UserResponse {
+    int32 id = 1;
+}
+
+message LoginRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message LoginResponse {
+    string token = 1;
+}
+
+message ValidateJWTRequest {
+    string token = 1;
+}
+
+message ValidateJWTResponse {
+    bool valid = 1;
+    int32 user_id = 2;
+}

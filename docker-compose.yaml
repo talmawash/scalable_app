@@ -1,0 +1,93 @@
+# This is just an example; customize to your needs.
+version: '3'
+
+services:
+  postgres-auth:
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres-auth
+      POSTGRES_PASSWORD: postgres-auth
+    ports:
+      - 5432:5432
+
+  postgres-list:
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres-list
+      POSTGRES_PASSWORD: postgres-list
+    ports:
+      - 5433:5432
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: auth_service/dockerfile
+    image: auth_service
+    environment:
+      POSTGRES_HOST: postgres-auth
+      POSTGRES_USER: postgres-auth
+      POSTGRES_PASSWORD: postgres-auth
+      POSTGRES_DB: postgres-auth
+      POSTGRES_PORT: 5432
+      SECRET: secret
+      ZIPKIN_URL: http://zipkin:9411/api/v2/spans
+      PROMETHEUS_PORT: 8757
+    depends_on:
+      - postgres-auth
+    ports:
+      - 50051:50051
+
+  list-service:
+    build:
+      context: .
+      dockerfile: list_service/dockerfile
+    image: list_service
+    environment:
+      POSTGRES_HOST: postgres-list
+      POSTGRES_USER: postgres-list
+      POSTGRES_PASSWORD: postgres-list
+      POSTGRES_DB: postgres-list
+      POSTGRES_PORT: 5432
+      ZIPKIN_URL: http://zipkin:9411/api/v2/spans
+      PROMETHEUS_PORT: 8757
+      AUTH_SERVICE: auth-service:50051
+    depends_on:
+      - postgres-list
+    ports:
+      - 50052:50052
+
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+
+  zipkin:
+    image: openzipkin/zipkin-slim
+    environment:
+      - STORAGE_TYPE=elasticsearch
+      - ES_HOSTS=elasticsearch:9200
+      - JAVA_OPTS=-Xms256m -Xmx256m -XX:+ExitOnOutOfMemoryError
+    depends_on:
+      - elasticsearch
+    ports:
+      - 9411:9411
+
+  zipkin-dependencies:
+    image: openzipkin/zipkin-dependencies
+    entrypoint: crond -f
+    environment:
+      - STORAGE_TYPE=elasticsearch
+      - ES_HOSTS=elasticsearch:9200
+    depends_on:
+      - elasticsearch
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.14
+    environment:
+      - discovery.type=single-node
+    ports:
+      - 9200:9200
+      - 9300:9300

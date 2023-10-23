@@ -1,0 +1,19 @@
+# This will not work unless the context is the root of the project
+# In the root directory, run: docker build -t auth_service -f auth_service/dockerfile .
+
+FROM python:3.9.18-slim-bookworm
+
+WORKDIR /app
+
+COPY auth_service .
+COPY shared shared
+
+RUN pip install -r requirements.txt
+
+EXPOSE 50051
+
+ENV NAME auth_service
+
+CMD ["python", "auth_server.py"]
+
+
