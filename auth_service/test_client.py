@@ -2,7 +2,7 @@ import logging
 import random
 import time
 import grpc
-import user_pb2, user_pb2_grpc
+from protos import user_pb2, user_pb2_grpc
 from shared.grpc_utils import init_grpc_telemetry
 from threading import Thread
 
